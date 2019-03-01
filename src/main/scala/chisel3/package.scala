@@ -271,6 +271,7 @@ package object chisel3 {    // scalastyle:ignore package.object.name
 
   val RegNext = chisel3.core.RegNext
   val RegInit = chisel3.core.RegInit
+  val RegPreset = chisel3.core.RegPreset
   object Reg {
     import chisel3.core.{Binding, CompileOptions}
     import chisel3.internal.sourceinfo.SourceInfo

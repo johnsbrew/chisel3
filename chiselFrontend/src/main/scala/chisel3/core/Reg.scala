@@ -9,6 +9,8 @@ import chisel3.internal.Builder.pushCommand
 import chisel3.internal.firrtl._
 import chisel3.internal.sourceinfo.{SourceInfo}
 
+import _root_.firrtl.annotations.{PresetRegAnnotation}
+
 /** Utility for constructing hardware registers
   *
   * The width of a `Reg` (inferred or not) is copied from the type template
@@ -176,3 +178,67 @@ object RegInit {
   }
 
 }
+
+case class PresetRegChiselAnnotation(target: InstanceId)
+    extends ChiselAnnotation {
+  def toFirrtl = PresetRegAnnotation(target.toNamed)
+}
+
+object RegPreset {
+  /** @usecase def apply[T <: Data](t: T, preset: T): T
+    *   Construct a [[Reg]] from a type template preset to the specified value on FPGA startup (note: does not make sense for ASIC design)
+    *   @param t The type template used to construct this [[Reg]]
+    *   @param preset The value the [[Reg]] is preset to on FPGA startup
+    */
+  def apply[T <: Data](t: T, preset: T)(implicit sourceInfo: SourceInfo, compileOptions: CompileOptions): T = {
+    val reg = RegInit(t, preset)
+    val anno = PresetRegChiselAnnotation(reg)
+    annotate(anno)
+    reg
+  }
+
+  /** @usecase def apply[T <: Data](preset: T): T
+    *   Construct a [[Reg]] preset to the specified value.
+    *   @param preset The value that serves as a type template and preset value
+    */
+  def apply[T <: Data](preset: T)(implicit sourceInfo: SourceInfo, compileOptions: CompileOptions): T = {
+    val model = chiselTypeOf(preset).asInstanceOf[T]
+    RegPreset(model, preset)
+  }
+}
+
+// object RegPreset {
+//   /** @usecase def apply[T <: Data](t: T, preset: T): T
+//     *   Construct a [[Reg]] from a type template preset to the specified value on FPGA startup (note: does not make sense for ASIC design)
+//     *   @param t The type template used to construct this [[Reg]]
+//     *   @param preset The value the [[Reg]] is preset to on FPGA startup
+//     */
+//   def apply[T <: Data](t: T, preset: T)(implicit sourceInfo: SourceInfo, compileOptions: CompileOptions): T = {
+//     if (compileOptions.declaredTypeMustBeUnbound) {
+//       requireIsChiselType(t, "reg type")
+//     }
+//     val reg = t.cloneTypeFull
+//     val clock = Builder.forcedClock.ref
+// 
+//     reg.bind(RegBinding(Builder.forcedUserModule))
+//     requireIsHardware(preset, "reg preset value")
+//     pushCommand(DefReg(sourceInfo, reg, clock))
+//     val anno = PresetRegChiselAnnotation(reg, preset)
+//     annotate(anno)
+//     reg
+//   }
+// 
+//   /** @usecase def apply[T <: Data](preset: T): T
+//     *   Construct a [[Reg]] presetialized on reset to the specified value.
+//     *   @param init Initial value that serves as a type template and reset value
+//     */
+//   def apply[T <: Data](preset: T)(implicit sourceInfo: SourceInfo, compileOptions: CompileOptions): T = {
+//     val model = (preset match {
+//       // If preset is a literal without forced width OR any non-literal, let width be inferred
+//       case preset: Bits if !preset.litIsForcedWidth.getOrElse(false) => preset.cloneTypeWidth(Width())
+//       case preset => preset.cloneTypeFull
+//     }).asInstanceOf[T]
+//     RegPreset(model, preset)
+//   }
+// 
+// }
