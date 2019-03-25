@@ -251,7 +251,12 @@ private[chisel3] object Converter {
       case SpecifiedDirection.Unspecified | SpecifiedDirection.Flip => false
     }
     val tpe = extractType(port.id, clearDir)
-    fir.Port(fir.NoInfo, port.id.getRef.name, dir, tpe)
+    // Quick & dirty hack
+    if (port.id.getRef.name ==  "reset") {
+      fir.Port(fir.NoInfo, port.id.getRef.name, dir, fir.AsyncResetType)
+    } else {
+      fir.Port(fir.NoInfo, port.id.getRef.name, dir, tpe)
+    }
   }
 
   def convert(component: Component): fir.DefModule = component match {

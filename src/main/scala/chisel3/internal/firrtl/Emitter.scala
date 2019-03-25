@@ -23,7 +23,13 @@ private class Emitter(circuit: Circuit) {
       case SpecifiedDirection.Input | SpecifiedDirection.Output => true
       case SpecifiedDirection.Unspecified | SpecifiedDirection.Flip => false
     }
-    s"$dirString ${e.id.getRef.name} : ${emitType(e.id, clearDir)}"
+    // Quick & dirty hack
+    if (e.id.getRef.name ==  "reset") {
+      s"$dirString ${e.id.getRef.name} : AsyncReset"
+    } else {
+      s"$dirString ${e.id.getRef.name} : ${emitType(e.id, clearDir)}"
+    }
+    
   }
 
   private def emitType(d: Data, clearDir: Boolean = false): String = d match { // scalastyle:ignore cyclomatic.complexity line.size.limit
